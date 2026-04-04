@@ -7,37 +7,103 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #0b0c10; color: #c5c6c7; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(31, 40, 51, 0.8); backdrop-filter: blur(10px); border: 1px solid #45a29e; }
+        body { background-color: #050505; color: #00ff41; font-family: 'Courier New', Courier, monospace; } /* 해커/로컬 CCTV 테마 */
+        .glass { background: rgba(0, 20, 0, 0.8); backdrop-filter: blur(5px); border: 1px solid #00ff41; box-shadow: 0 0 10px rgba(0, 255, 65, 0.2); }
+        .scan-line { width: 100%; height: 2px; background: rgba(0, 255, 65, 0.5); position: absolute; animation: scan 3s linear infinite; }
+        @keyframes scan { 0% { top: 0; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
     </style>
 </head>
-<body class="p-8">
-    <h1 class="text-3xl font-extrabold text-[#66fcf1] mb-2"><i class="fab fa-youtube"></i> 1004MAS YOUTUBE FACTORY</h1>
-    <p class="text-gray-400 mb-8">글로벌 하이엔드 다큐 무인 자동화 공장 감시망</p>
+<body class="p-8 relative overflow-hidden">
+    <div class="scan-line"></div>
+    <h1 class="text-3xl font-extrabold text-[#00ff41] mb-2 drop-shadow-[0_0_8px_rgba(0,255,65,0.8)]"><i class="fas fa-video"></i> 1004MAS YOUTUBE FACTORY CCTV</h1>
+    <p class="text-green-700 mb-8 font-bold">&gt; 주군의 로컬 컴퓨터 비디오 렌더링 폴더 원격 감시망</p>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="glass p-6 rounded-xl">
-            <h2 class="text-xl font-bold text-white mb-4">채널 가동 현황</h2>
-            <ul class="space-y-4">
-                <li class="bg-black/50 p-3 rounded-lg flex justify-between items-center">
-                    <span class="text-white">AI_TECH MIX (EN)</span>
-                    <span class="text-[#66fcf1] font-bold">100% (업로드 완료)</span>
-                </li>
-                <li class="bg-black/50 p-3 rounded-lg flex justify-between items-center">
-                    <span class="text-white">마스터피스 다큐 2편 (KR)</span>
-                    <span class="text-yellow-400 font-bold">42% (초벌 렌더링 중)</span>
-                </li>
-            </ul>
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <!-- 워커 노드 및 시스템 상태 -->
+        <div class="md:col-span-4 glass p-6 rounded-xl relative">
+            <h2 class="text-xl font-bold text-white mb-4"><i class="fas fa-server mr-2"></i> 로컬 워커 상태</h2>
+            <div class="space-y-4">
+                <div class="bg-black p-4 rounded border border-green-800">
+                    <div class="text-xs text-green-700 mb-1">통제 엔진 상태</div>
+                    <div id="factory-status" class="text-lg font-bold">통신 연결 중...</div>
+                </div>
+                <div class="bg-black p-4 rounded border border-green-800">
+                    <div class="text-xs text-green-700 mb-1">로컬 디스크 잔여 용량 (Drive C)</div>
+                    <div id="drive-space" class="text-2xl font-black text-white">--- GB</div>
+                </div>
+                <div class="bg-black p-4 rounded border border-green-800">
+                    <div class="text-xs text-green-700 mb-1">최종 스캔 시각</div>
+                    <div id="last-scan-time" class="text-sm font-bold text-gray-400">0000-00-00 00:00</div>
+                </div>
+            </div>
+            <!-- CCTV 장식 -->
+            <div class="absolute top-4 right-4 flex items-center">
+                <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-2"></div>
+                <span class="text-red-500 text-xs font-bold tracking-widest">REC</span>
+            </div>
         </div>
         
-        <div class="glass p-6 rounded-xl border-l-4 border-[#66fcf1]">
-            <h2 class="text-lg font-bold text-white mb-2"><i class="fas fa-server"></i> 워커 노드 상태</h2>
-            <p class="text-gray-300 text-sm leading-relaxed">
-                파이썬 FFmpeg 엔진 정상. 비동기 렌더링 최적화 100%. 스토리지 용량 320GB 남음.
-            </p>
+        <!-- 최근 렌더링/작업 파일 리스트 -->
+        <div class="md:col-span-8 glass p-6 rounded-xl">
+            <h2 class="text-lg font-bold text-white mb-4"><i class="far fa-folder-open mr-2"></i> 최근 업데이트된 로컬 파일 (Top 5)</h2>
+            <div class="bg-black p-4 rounded border border-green-800 min-h-[300px]">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-green-700 text-xs border-b border-green-900">
+                            <th class="pb-2">TIME</th>
+                            <th class="pb-2">FOLDER</th>
+                            <th class="pb-2">FILE NAME (TARGET)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-files-list" class="text-sm">
+                        <tr>
+                            <td colspan="3" class="py-4 text-center text-green-900">데이터 수신 대기 중...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+    
+    <div class="mt-8 text-center text-sm font-sans">
+        <a href="https://www.1004mas.com" class="text-green-600 hover:text-[#00ff41] underline"><i class="fas fa-door-open mr-1"></i> 중앙 포탈로 복귀</a>
+    </div>
 
-    <div class="mt-8 text-center"><a href="https://www.1004mas.com" class="text-[#45a29e] hover:text-white underline">포탈(Portal) 복귀</a></div>
+    <script>
+        async function fetchFactoryStatus() {
+            try {
+                // Node 5 (YouTube Factory) JSONBin
+                const res = await fetch('https://api.jsonbin.io/v3/b/69d07486856a682189f9ff35?meta=false');
+                const data = await res.json();
+                
+                if(data.status) {
+                    document.getElementById('factory-status').innerText = data.status;
+                    document.getElementById('factory-status').className = data.status.includes('정상') ? 'text-lg font-bold text-green-400' : 'text-lg font-bold text-yellow-400';
+                    document.getElementById('drive-space').innerText = data.free_space || '알 수 없음';
+                    document.getElementById('last-scan-time').innerText = data.timestamp || '알 수 없음';
+                    
+                    if(data.recent_files && data.recent_files.length > 0) {
+                        const html = data.recent_files.map(f => `
+                            <tr class="border-b border-green-900/30 hover:bg-green-900/20 transition-colors">
+                                <td class="py-3 text-gray-400 w-24">${f.time}</td>
+                                <td class="py-3 text-green-600 font-bold w-48 truncate" title="${f.folder}">[${f.folder}]</td>
+                                <td class="py-3 text-white truncate max-w-xs" title="${f.filename}">
+                                    <i class="far fa-file-code text-green-800 mr-2"></i>${f.filename}
+                                </td>
+                            </tr>
+                        `).join('');
+                        document.getElementById('recent-files-list').innerHTML = html;
+                    }
+                }
+            } catch(e) {
+                console.error("CCTV Fetch Error:", e);
+                document.getElementById('factory-status').innerText = "CCTV 통신 단절 (로컬 확인 요망)";
+                document.getElementById('factory-status').className = "text-lg font-bold text-red-500";
+            }
+        }
+
+        fetchFactoryStatus();
+        setInterval(fetchFactoryStatus, 30000); // 30초마다 갱신
+    </script>
 </body>
 </html>
